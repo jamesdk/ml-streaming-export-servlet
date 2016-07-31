@@ -48,6 +48,9 @@ There are a couple of ways to test the servlet with your own database.
 ### Option 1
 
 With the servlet running, open [http://localhost:8080/MLExportServlet/demo.html](http://localhost:8080/MLExportServlet/demo.html)
+
+<img src="demo.png" width="350" height="210" />
+
 This page provides the option of testing the performance of building your CSV export file in either 1) a Single Thread and then prompting the user to open/save the file, or 2) running a multi-threaded process that will stream the results to the CSV as they are retrived from the database
 
 Both option require that you set the following variables in the demo.html code:
@@ -67,4 +70,11 @@ Add the 3 xquery modules below to the modules database used by your XDBC App Ser
 -insert-getURIs.xqy  ** modify this file first to use a query to pull relavent URIs on your test database
 
 Once these are loaded, open [http://localhost:8080/MLExportServlet/startDemo.html](http://localhost:8080/MLExportServlet/startDemo.html) in your browser.
+
+<img src="startDemo.png" width="390" height="100" />
+
 Note: to get this feature to work, you'll have to set up an HTTP App Server on your ML instance to return the results of getURIs to the browser.  It requires more configuration, but it does give you the flexibility to quickly pull different counts of URIs to test the servlet performance.
+
+<img src="getURIs.png" width="350" height="234" />
+
+
