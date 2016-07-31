@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Export Demo</title>
+</head>
+<body>
+  <div>Export using single request to build CSV</div>
+  <form action="http://localhost:8080/MLExportServlet/ExportServletSingleThread" method="post">
+    <input type="hidden" name="uris" value="uri1,uri2,uri3,uri4,uri5,uri6,uri7,uri8,uri9,uri10"/>
+    <input type="hidden" name="moduleName" value="get-output-row-by-URIs.xqy"/>
+    <input type="submit" value="Export (Single Thread)" />
+  </form>
+  <br/><br/>
+  <div>Export using multi-threaded request to build CSV</div>
+  <form action="http://localhost:8080/MLExportServlet/ExportServlet" method="post">
+    <input type="hidden" name="uris" value="uri1,uri2,uri3,uri4,uri5,uri6,uri7,uri8,uri9,uri10"/>
+    <input type="hidden" name="moduleName" value="get-output-row-by-URIs.xqy"/>
+    <input type="submit" value="Export (Multi-Thread)" />
+  </form>
+</body>
+</html>
