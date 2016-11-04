@@ -14,6 +14,11 @@ The web.xml file must be modified to point to 1 or more XDBC app servers linked 
 
 In the example below, note the first setting defines how many XCC URLs to look for and below that the XCC URLs are defined.
 
+Other configuration items include the following:
+ml.xcc.batchsize - defines the number of URIs for the export report module to process at one time
+ml.xcc.max_threads - defines the maximum number of threads for the Export Servlet's ThreadPool (typically corresponds to the XDBC AppServer max threads).
+ml.config.uri - defines the initial module in the modules DB for the Export Servlet connection
+
 web.xml
 ```
 <env-entry> 
@@ -33,6 +38,25 @@ web.xml
     <env-entry-type>java.lang.String</env-entry-type>
     <env-entry-value>xdbc://username:password@localhost:9004/samples</env-entry-value> 
 </env-entry>
+
+<env-entry>
+    <env-entry-name>ml.xcc.batchsize</env-entry-name>
+    <env-entry-type>java.lang.Integer</env-entry-type>
+    <env-entry-value>10</env-entry-value>
+</env-entry>
+
+<env-entry>
+    <env-entry-name>ml.xcc.max_threads</env-entry-name>
+    <env-entry-type>java.lang.Integer</env-entry-type>
+    <env-entry-value>28</env-entry-value>
+</env-entry>
+	
+<env-entry>
+    <env-entry-name>ml.config.uri</env-entry-name>
+    <env-entry-type>java.lang.String</env-entry-type>
+    <env-entry-value>/get-report-config.xqy</env-entry-value>
+</env-entry>
+
 ```
 
 ### Dependencies
@@ -65,8 +89,9 @@ b) Replace the value of the module name with a module you already have on your X
 
 ### Option 2
 Add the 3 xquery modules below to the modules database used by your XDBC App Server referenced in web.xml
+-insert-get-report-config.xqy
 -insert-exportCSV.xqy
--insert-get-output-row-by-URIs.xqy.xqy
+-insert-get-output-row-by-URIs.xqy
 -insert-getURIs.xqy  ** modify this file first to use a query to pull relavent URIs on your test database
 
 Once these are loaded, open [http://localhost:8080/MLExportServlet/startDemo.html](http://localhost:8080/MLExportServlet/startDemo.html) in your browser.
