@@ -1,31 +1,52 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://xmlns.jcp.org/xml/ns/javaee" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd" id="WebApp_ID" version="3.1">
-  <display-name>MLExportServlet</display-name>
-  <welcome-file-list>
-    <welcome-file>index.html</welcome-file>
-    <welcome-file>index.htm</welcome-file>
-    <welcome-file>index.jsp</welcome-file>
-    <welcome-file>default.html</welcome-file>
-    <welcome-file>default.htm</welcome-file>
-    <welcome-file>default.jsp</welcome-file>
-  </welcome-file-list>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+	id="WebApp_ID" version="3.1">
+	<display-name>MLExportServlet</display-name>
+	<welcome-file-list>
+		<welcome-file>index.html</welcome-file>
+		<welcome-file>index.htm</welcome-file>
+		<welcome-file>index.jsp</welcome-file>
+		<welcome-file>default.html</welcome-file>
+		<welcome-file>default.htm</welcome-file>
+		<welcome-file>default.jsp</welcome-file>
+	</welcome-file-list>
 
-<env-entry> 
-    <env-entry-name>ml.xcc.urlcount</env-entry-name>
-    <env-entry-type>java.lang.Integer</env-entry-type>
-    <env-entry-value>2</env-entry-value> 
-</env-entry>
-  
-<env-entry> 
-    <env-entry-name>ml.xcc.url1</env-entry-name>
-    <env-entry-type>java.lang.String</env-entry-type>
-    <env-entry-value>xdbc://username:password@localhost:9003/samples</env-entry-value> 
-</env-entry>
+	<env-entry>
+		<env-entry-name>ml.xcc.urlcount</env-entry-name>
+		<env-entry-type>java.lang.Integer</env-entry-type>
+		<env-entry-value>2</env-entry-value>
+	</env-entry>
 
-<env-entry> 
-    <env-entry-name>ml.xcc.url2</env-entry-name>
-    <env-entry-type>java.lang.String</env-entry-type>
-    <env-entry-value>xdbc://username:password@localhost:9004/samples</env-entry-value> 
-</env-entry>
+	<env-entry>
+		<env-entry-name>ml.xcc.url1</env-entry-name>
+		<env-entry-type>java.lang.String</env-entry-type>
+		<env-entry-value>xdbc://username:password@localhost:9003/samples</env-entry-value>
+	</env-entry>
 
+	<env-entry>
+		<env-entry-name>ml.xcc.url2</env-entry-name>
+		<env-entry-type>java.lang.String</env-entry-type>
+		<env-entry-value>xdbc://username:password@localhost:9004/samples</env-entry-value>
+	</env-entry>
+
+	<env-entry>
+		<env-entry-name>ml.xcc.batchsize</env-entry-name>
+		<env-entry-type>java.lang.Integer</env-entry-type>
+		<env-entry-value>10</env-entry-value>
+	</env-entry>
+	
+	<env-entry>
+		<env-entry-name>ml.xcc.max_threads</env-entry-name>
+		<env-entry-type>java.lang.Integer</env-entry-type>
+		<env-entry-value>28</env-entry-value>
+	</env-entry>
+	
+	<env-entry>
+		<env-entry-name>ml.config.uri</env-entry-name>
+		<env-entry-type>java.lang.String</env-entry-type>
+		<env-entry-value>/get-report-config.xqy</env-entry-value>
+	</env-entry>
+	
 </web-app>

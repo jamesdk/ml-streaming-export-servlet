@@ -2,8 +2,12 @@ package com.marklogic.export.client;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
@@ -21,125 +25,232 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.marklogic.xcc.*;
+import com.marklogic.xcc.types.XName;
+import com.marklogic.xcc.types.XdmValue;
+import com.marklogic.xcc.types.XdmVariable;
+
 /**
  * Servlet implementation class ExportServlet
  */
 @WebServlet("/ExportServlet")
 public class ExportServlet extends HttpServlet {
-	private static final long serialVersionUID = 1L;	
-	private static int MAX_THREADS = 16;
+	private static final long serialVersionUID = 1L;
+	private int MAX_THREADS;
+	private int batchsize;
 	private String xccURL = null;
+	private String mlConfigURI = null;
 	private List<String> xccURLs;
-       
-    /**
-     * @see HttpServlet#HttpServlet()
-     */
-    public ExportServlet() {
-        super();
-        
+
+	/**
+	 * @see HttpServlet#HttpServlet()
+	 */
+	public ExportServlet() {
+		super();
+
 		Context env;
 		xccURL = null;
-		
-		int urlCount = 0;		
+
+		int urlCount = 0;
 		try {
-			env = (Context)new InitialContext().lookup("java:comp/env");
-			urlCount = (Integer)env.lookup("ml.xcc.urlcount");
-			
+			env = (Context) new InitialContext().lookup("java:comp/env");
+			urlCount = (Integer) env.lookup("ml.xcc.urlcount");
+
 			xccURLs = new ArrayList<String>();
-			for(int i=1; i<=urlCount; i++){
-				xccURL = (String)env.lookup("ml.xcc.url"+i);
+			for (int i = 1; i <= urlCount; i++) {
+				xccURL = (String) env.lookup("ml.xcc.url" + i);
 				xccURLs.add(xccURL);
 			}
-			for(int i=0; i<xccURLs.size(); i++) {
-				System.out.println("xccURL"+i+": "+xccURLs.get(i));
+			for (int i = 0; i < xccURLs.size(); i++) {
+				System.out.println("xccURL" + i + ": " + xccURLs.get(i));
 			}
-			
+
 		} catch (NamingException e1) {
 			e1.printStackTrace();
 		}
-    }
-    
-    public void init(ServletConfig config) throws ServletException {
-    	
-    }
+	}
+
+	public void init(ServletConfig config) throws ServletException {
+		Context env;
+		int urlCount = 0;
+		try {
+			env = (Context) new InitialContext().lookup("java:comp/env");
+			urlCount = (Integer) env.lookup("ml.xcc.urlcount");
+			MAX_THREADS = (Integer) env.lookup("ml.xcc.max_threads");
+			mlConfigURI = (String) env.lookup("ml.config.uri");
+			batchsize = (Integer) env.lookup("ml.xcc.batchsize");
+			
+			System.out.println("urlCount:" + urlCount);
+			System.out.println("MAX_THREADS:" + MAX_THREADS);
+			System.out.println("mlConfigURI:" + mlConfigURI);
+			System.out.println("batchsize:" + batchsize);
+
+			xccURLs = new ArrayList<String>();
+			for (int i = 1; i <= urlCount; i++) {
+				xccURL = (String) env.lookup("ml.xcc.url" + i);
+				xccURLs.add(xccURL);
+			}
+		} catch (NamingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 
 	/**
-	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
+	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse
+	 *      response)
 	 */
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	protected void doGet(HttpServletRequest request,
+			HttpServletResponse response) throws ServletException, IOException {
 		OutputStream out = response.getOutputStream();
 		out.write("standard response to get request".getBytes("UTF-8"));
 		out.flush();
 	}
 
 	/**
-	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
+	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse
+	 *      response)
 	 */
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	protected void doPost(HttpServletRequest request,
+			HttpServletResponse response) throws ServletException, IOException {
 
-		java.util.Date start = new java.util.Date();
-		System.out.println("Start time: "+ start.getTime());
-		response.setContentType("application/vnd.ms-excel");
-		response.setHeader("Content-Disposition", "attachment; filename=download.csv");
-		// get request parameters
-		String mlModuleName = request.getParameter("moduleName");
-		String uris = request.getParameter("uris");
-		System.out.println("URIs:"+uris);
-		String[] uriList = uris.split(",");
-		ServletOutputStream os = response.getOutputStream();
-		os.write("header".getBytes());
-		int batchsize = 10;
-		String uriBatchString = null;
-
-		ExecutorService exec = Executors.newFixedThreadPool(MAX_THREADS);
-		ExecutorCompletionService<String> compServ = new ExecutorCompletionService<String>(exec);
-		// build URI csvVar
-		int threadNumber = 0;
-		
-		for(int j=0; j<uriList.length; j=j+batchsize) {
-			StringBuffer uriBatch = new StringBuffer();
-			for(int k=0; (k < batchsize && (j+k) < uriList.length); k++) {
-				if(k > 0) {
-					uriBatch.append(",").append(uriList[j+k]);
+		try {
+			java.util.Date start = new java.util.Date();
+			System.out.println("Start time: " + start.getTime());
+			
+			// get request parameters
+			//String mlModuleName = request.getParameter("moduleName");
+			String reportName = request.getParameter("reportName");
+			String mlModuleName = getReportModuleURI(reportName);
+			
+			String uris = request.getParameter("uris");
+			System.out.println("URIs:" + uris);
+			String[] uriList = uris.split(",");
+			int uriCount = uriList.length;
+			String reportType = getReportType(mlModuleName);
+			String filename = reportName+ "-"+ uriCount + "." + reportType;
+			
+			response.setContentType("application/vnd.ms-excel");
+			response.setHeader("Content-Disposition",
+					"attachment; filename="+filename);
+			
+			ServletOutputStream os = response.getOutputStream();
+			String header = getReportHeader(mlModuleName, "csv");
+			os.write(header.getBytes());
+			String uriBatchString = null;
+	
+			ExecutorService exec = Executors.newFixedThreadPool(MAX_THREADS);
+			ExecutorCompletionService<String> compServ = new ExecutorCompletionService<String>(exec);
+			// build URI csvVar
+			int threadNumber = 0;
+	
+			for (int j = 0; j < uriList.length; j = j + batchsize) {
+				StringBuffer uriBatch = new StringBuffer();
+				for (int k = 0; (k < batchsize && (j + k) < uriList.length); k++) {
+					if (k > 0) {
+						uriBatch.append(",").append(uriList[j + k]);
+					} else {
+						uriBatch.append(uriList[j + k]);
+					}
 				}
-				else {
-					uriBatch.append(uriList[j+k]);
+				uriBatchString = uriBatch.toString();
+				threadNumber++;
+				System.out.println("threadNumber:" + threadNumber);
+				int xccURLIndex = threadNumber % xccURLs.size();
+				System.out.println("xccURLIndex:" + xccURLIndex);
+				xccURL = xccURLs.get(xccURLIndex);
+				System.out.println("xccURL:" + xccURL);
+				GetOutput_Callable task = new GetOutput_Callable(uriBatchString,
+						threadNumber, xccURL, mlModuleName);
+				compServ.submit(task);
+			}
+	
+			for (int j = 0; j < uriList.length; j = j + batchsize) {
+				Future<String> future;
+				try {
+					future = compServ.take();
+					String output = (String) future.get();
+					response.getOutputStream().write(output.getBytes());
+	
+				} catch (InterruptedException | ExecutionException e) {
+					e.printStackTrace();
 				}
 			}
-			uriBatchString = uriBatch.toString();
-			threadNumber++;
-			System.out.println("threadNumber:"+threadNumber);
-			int xccURLIndex = threadNumber % xccURLs.size();
-			System.out.println("xccURLIndex:"+xccURLIndex);
-			xccURL = xccURLs.get(xccURLIndex);
-			System.out.println("xccURL:"+xccURL);
-			GetOutput_Callable task = new GetOutput_Callable(uriBatchString, threadNumber, xccURL, mlModuleName);
-			compServ.submit(task);
-		}
-		
-		for(int j=0; j<uriList.length; j=j+batchsize) {
-			Future<String> future;
-			try {
-				future = compServ.take();
-				String output = (String)future.get();
-				response.getOutputStream().write(output.getBytes());
-				
-			} catch (InterruptedException | ExecutionException e) {
-				e.printStackTrace();
+			exec.shutdown();
+			while (!exec.isTerminated()) {
+				// do nothing
 			}
-		}
-		exec.shutdown();
-		while(!exec.isTerminated()) {
-			// do nothing
-		}
+	
+			java.util.Date end = new java.util.Date();
+			System.out.println("End time: " + end.getTime());
+			long diffInMilliseconds = (end.getTime() - start.getTime());
+			//String footer = "Runtime in Milliseconds: " + diffInMilliseconds;
+			String footer = getReportFooter(mlModuleName);
+			System.out.println(footer);
+			os.write(footer.getBytes());
+	
+			os.flush();
+			os.close();
 		
-		java.util.Date end = new java.util.Date();
-		System.out.println("End time: "+ end.getTime());
-		long diffInMilliseconds = (end.getTime() - start.getTime());
-		String footer = "Runtime in Millisconds: "+ diffInMilliseconds;
-		System.out.println(footer);
-		
-		os.flush();
-		os.close();
+		} catch (Exception e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 	}
+
+	private String callMLModule(String moduleURI, Map<String, String> args)
+			throws Exception {
+		String mlResponse = null;
+		ContentSource cs;
+
+		cs = ContentSourceFactory.newContentSource(new URI(xccURL));
+		cs.setAuthenticationPreemptive(true);
+		Session session = cs.newSession();
+		Request request = session.newModuleInvoke(moduleURI);
+
+		for (Entry<String, String> entry : args.entrySet()) {
+			String mapKey = entry.getKey();
+			String mapValue = entry.getValue();
+			XdmValue value = ValueFactory.newXSString(mapValue);
+			XName xname = new XName("", mapKey);
+			XdmVariable myVar = ValueFactory.newVariable(xname, value);
+			request.setVariable(myVar);
+		}
+
+		ResultSequence rs = session.submitRequest(request);
+		mlResponse = rs.asString();
+
+		return mlResponse;
+	}
+
+	private String getReportModuleURI(String reportName) throws Exception {
+		  Map<String, String> params = new HashMap<String, String>();
+		  params.put("REPORT-NAME", reportName);
+		  String reportModuleURI = callMLModule(mlConfigURI, params);
+		  return reportModuleURI;  
+		}
+
+	private String getReportHeader(String moduleURI, String rptType) throws Exception {
+		  Map<String, String> params = new HashMap<String, String>();
+		  params.put("OUTPUT-TYPE", "header");
+		  String output = callMLModule(moduleURI, params);
+		  if(rptType.equals("csv")) {
+		    output = output + "\n";
+		  }
+		  return output;
+		}
+
+	private String getReportFooter(String moduleURI) throws Exception {
+		  Map<String, String> params = new HashMap<String, String>();
+		  params.put("OUTPUT-TYPE", "footer");
+		  String output = callMLModule(moduleURI, params);
+		  return output;
+		}
+
+	private String getReportType(String moduleURI) throws Exception {
+		  Map<String, String> params = new HashMap<String, String>();
+		  params.put("OUTPUT-TYPE", "type");
+		  String output = callMLModule(moduleURI, params);
+		  return output;
+		}
 }

@@ -1,6 +1,6 @@
 let $module := '
 let $request-doc-count := xdmp:get-request-field("docCount")
-let $module-name := "get-output-row-by-URIs.xqy"
+let $report-name := "TEST"
 
 let $my-query := cts:and-query((
                       cts:collection-query("socialMedia"),
@@ -20,14 +20,14 @@ let $html-output :=
   <div>Export using single request to build CSV</div>
     <form action="http://localhost:8080/MLExportServlet/ExportServletSingleThread" method="post">
     <input type="hidden" name="uris" value="{$uri-list}"/>
-    <input type="hidden" name="moduleName" value="{$module-name}"/>
+    <input type="hidden" name="reportName" value="{$report-name}"/>
     <input type="submit" value="Export (Single Thread)" />
   </form>
   <br/><br/>
   <div>Export using multi-threaded request to build CSV</div>
   <form action="http://localhost:8080/MLExportServlet/ExportServlet" method="post">
     <input type="hidden" name="uris" value="{$uri-list}"/>
-    <input type="hidden" name="moduleName" value="{$module-name}"/>
+    <input type="hidden" name="reportName" value="{$report-name}"/>
     <input type="submit" value="Export (Multi-Thread)" />
   </form>
 </body>

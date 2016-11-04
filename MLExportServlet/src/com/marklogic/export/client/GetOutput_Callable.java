@@ -60,6 +60,20 @@ public class GetOutput_Callable implements Callable<String> {
 			// bind the Variable to the Request
 			request.setVariable (myVariable);
 			
+			
+			// create an unnamed xs:string value
+			XdmValue value2 = ValueFactory.newXSString("mainReport");
+
+			// create a new XName object referencing the above namespace
+			XName xname2 = new XName("", "OUTPUT-TYPE");
+
+			// Create a Variable (name + value) instance
+			XdmVariable myVariable2 = ValueFactory.newVariable(xname2, value2);
+
+			// bind the Variable to the Request
+			request.setVariable (myVariable2);
+			
+			
 			ResultSequence rs = session.submitRequest(request);
 			
 			String result = rs.asString();			
