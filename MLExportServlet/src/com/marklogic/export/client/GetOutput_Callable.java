@@ -18,12 +18,17 @@ public class GetOutput_Callable implements Callable<String> {
 	private String result;
 	private String xccURL;
 	private String mlModuleName;
+	private String mlParams;
 	
-	public GetOutput_Callable(String URI, int threadNumber, String xccURL, String mlModuleName) {
+	private ContentSource contentSource;
+	
+	public GetOutput_Callable(ContentSource contentSource, String URI, int threadNumber, String xccURL, String mlModuleName, String mlParams) {
 		this.URI = URI;
 		this.threadNumber = threadNumber;
 		this.xccURL = xccURL;
 		this.mlModuleName = mlModuleName;
+		this.contentSource = contentSource;
+		this.mlParams = mlParams;
 	}
 	
 	public String get() {
@@ -38,13 +43,8 @@ public class GetOutput_Callable implements Callable<String> {
 	public String call() throws Exception {
 		
 		StringBuffer sb = null;
-
-//		System.out.println("Starting thread: " + this.threadNumber 
-//				+ " for URI: "+ this.URI + " with session URL: "+ this.xccURL);
 		
 		try {
-			ContentSource contentSource = ContentSourceFactory.newContentSource(new URI(xccURL));
-			contentSource.setAuthenticationPreemptive(true);
 			Session session = contentSource.newSession();
 			Request request = session.newModuleInvoke(mlModuleName);
 			
@@ -71,18 +71,23 @@ public class GetOutput_Callable implements Callable<String> {
 			XdmVariable myVariable2 = ValueFactory.newVariable(xname2, value2);
 
 			// bind the Variable to the Request
-			request.setVariable (myVariable2);
+			request.setVariable (myVariable2);			
 			
+			// pass the ML params to the Xquery Module
+			XdmValue value3 = ValueFactory.newXSString(mlParams);
+			XName xname3 = new XName("", "MLPARAMS");
+			XdmVariable mlParamsVar = ValueFactory.newVariable(xname3, value3);
+			request.setVariable(mlParamsVar);			
 			
 			ResultSequence rs = session.submitRequest(request);
 			
 			String result = rs.asString();			
-//			System.out.println(result);
 			
 			sb = new StringBuffer(result);
 			sb.append("\n");	
 			
-		} catch (XccConfigException | URISyntaxException | RequestException e) {
+		//} catch (XccConfigException | URISyntaxException | RequestException e) {
+		} catch (RequestException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}				

@@ -123,10 +123,16 @@ public class ExportServlet extends HttpServlet {
 			String reportName = request.getParameter("reportName");
 			String mlModuleName = getReportModuleURI(reportName);
 			
-			String uris = request.getParameter("uris");
-			System.out.println("URIs:" + uris);
-			String[] uriList = uris.split(",");
+			String mlParams = request.getParameter("mlParams");
+			System.out.println("mlParams:" + mlParams);
+			
+			String inputURIs = request.getParameter("uris");
+			//System.out.println("inputURIs:" + inputURIs);
+			String groupedURIs = getURIsGroupedByForest(inputURIs);
+			//System.out.println("groupedURIs:" + groupedURIs);			
+			String[] uriList = inputURIs.split(",");
 			int uriCount = uriList.length;
+			System.out.println("uriCount: "+uriCount);
 			String reportType = getReportType(mlModuleName);
 			String filename = reportName+ "-"+ uriCount + "." + reportType;
 			
@@ -138,6 +144,9 @@ public class ExportServlet extends HttpServlet {
 			String header = getReportHeader(mlModuleName, "csv");
 			os.write(header.getBytes());
 			String uriBatchString = null;
+			
+			ContentSource contentSource = ContentSourceFactory.newContentSource(new URI(xccURL));
+			contentSource.setAuthenticationPreemptive(true);
 	
 			ExecutorService exec = Executors.newFixedThreadPool(MAX_THREADS);
 			ExecutorCompletionService<String> compServ = new ExecutorCompletionService<String>(exec);
@@ -160,8 +169,8 @@ public class ExportServlet extends HttpServlet {
 				System.out.println("xccURLIndex:" + xccURLIndex);
 				xccURL = xccURLs.get(xccURLIndex);
 				System.out.println("xccURL:" + xccURL);
-				GetOutput_Callable task = new GetOutput_Callable(uriBatchString,
-						threadNumber, xccURL, mlModuleName);
+				GetOutput_Callable task = new GetOutput_Callable(contentSource, uriBatchString,
+						threadNumber, xccURL, mlModuleName, mlParams);
 				compServ.submit(task);
 			}
 	
@@ -184,8 +193,8 @@ public class ExportServlet extends HttpServlet {
 			java.util.Date end = new java.util.Date();
 			System.out.println("End time: " + end.getTime());
 			long diffInMilliseconds = (end.getTime() - start.getTime());
-			//String footer = "Runtime in Milliseconds: " + diffInMilliseconds;
-			String footer = getReportFooter(mlModuleName);
+			String footer = "Runtime in Milliseconds: " + diffInMilliseconds;
+			//String footer = getReportFooter(mlModuleName);
 			System.out.println(footer);
 			os.write(footer.getBytes());
 	
@@ -253,4 +262,51 @@ public class ExportServlet extends HttpServlet {
 		  String output = callMLModule(moduleURI, params);
 		  return output;
 		}
+	
+	private String getURIsGroupedByForest(String inputURIstring) throws Exception {
+		  Map<String, String> params = new HashMap<String, String>();
+		  params.put("URIS", inputURIstring);
+		  String MLoutput = callMLModule("/group-uris-by-forest.xqy", params);
+		  String groupedOutput = buildNewURIOrderedList(MLoutput);
+		  return groupedOutput;
+	}
+	private String buildNewURIOrderedList(String inputURIstringFromML) {
+		int batchSize = batchsize;
+		
+		String[] forestGroups = inputURIstringFromML.split(";");
+		int forestCount = forestGroups.length;
+		StringBuffer sb = new StringBuffer();
+		Boolean done = false;
+		String delim = ",";
+		while(!done) {
+			for(int i=0; i<forestCount; i++) {
+				String group = forestGroups[i];
+				String[] batchValues = group.split(",");
+				StringBuffer stringToRemove = new StringBuffer();
+				for(int j=0; (j<batchSize && j<batchValues.length && group.length()>0); j++) {
+					String value = batchValues[j];
+					sb.append(value).append(delim);
+					if(j+1 == batchValues.length) {
+						stringToRemove.append(value);						
+					} else {
+						stringToRemove.append(value).append(delim);
+					}
+
+				}
+				forestGroups[i] = forestGroups[i].replaceAll(stringToRemove.toString(), "");
+			}
+			// check to see if all the arrays are empty
+			done = true;  // reset to false if any is not empty
+			for(int i=0; i<forestCount; i++) {
+				String group = forestGroups[i];
+				if(!group.equals("")) {
+					done = false;
+					break;
+				}
+			}
+		}
+
+		String finalValues = sb.toString().substring(0, sb.toString().length()-1);
+		return finalValues;
+	}
 }
