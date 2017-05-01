@@ -126,7 +126,13 @@ public class ExportServlet extends HttpServlet {
 			String mlParams = request.getParameter("mlParams");
 			System.out.println("mlParams:" + mlParams);
 			
-			String inputURIs = request.getParameter("uris");
+			String inputURIs = request.getParameter("uris");			
+			String queryString = request.getParameter("q");
+			
+			if(queryString != null && !queryString.equals("") ) {
+				inputURIs = getURIsByQueryString(queryString);
+			}
+			
 			//System.out.println("inputURIs:" + inputURIs);
 			String groupedURIs = getURIsGroupedByForest(inputURIs);
 			//System.out.println("groupedURIs:" + groupedURIs);			
@@ -205,6 +211,13 @@ public class ExportServlet extends HttpServlet {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
+	}
+
+	private String getURIsByQueryString(String queryString) throws Exception {
+		  Map<String, String> params = new HashMap<String, String>();
+		  params.put("queryString", queryString);
+		  String MLoutput = callMLModule("/get-uris-by-query-string.xqy", params);
+		  return MLoutput;
 	}
 
 	private String callMLModule(String moduleURI, Map<String, String> args)
