@@ -74,6 +74,9 @@ public class GetOutput_Callable implements Callable<String> {
 			request.setVariable (myVariable2);			
 			
 			// pass the ML params to the Xquery Module
+			if(mlParams == null) {
+				mlParams = "";
+			}
 			XdmValue value3 = ValueFactory.newXSString(mlParams);
 			XName xname3 = new XName("", "MLPARAMS");
 			XdmVariable mlParamsVar = ValueFactory.newVariable(xname3, value3);
