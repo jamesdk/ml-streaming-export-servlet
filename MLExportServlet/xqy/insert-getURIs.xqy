@@ -24,9 +24,16 @@ let $html-output :=
     <input type="submit" value="Export (Single Thread)" />
   </form>
   <br/><br/>
-  <div>Export using multi-threaded request to build CSV</div>
+  <div>Export using multi-threaded request to build CSV using URIs:</div>
   <form action="http://localhost:8080/MLExportServlet/ExportServlet" method="post">
     <input type="hidden" name="uris" value="{$uri-list}"/>
+    <input type="hidden" name="reportName" value="{$report-name}"/>
+    <input type="submit" value="Export (Multi-Thread)" />
+  </form>
+  <br/><br/>
+  <div>Export using multi-threaded request to build CSV using search text</div>
+  <form action="http://localhost:8080/MLExportServlet/ExportServlet" method="post">
+    <input type="hidden" name="q" value="coll:socialMedia;limit:1000"/>
     <input type="hidden" name="reportName" value="{$report-name}"/>
     <input type="submit" value="Export (Multi-Thread)" />
   </form>
