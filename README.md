@@ -4,11 +4,15 @@ MarkLogic Streaming Export Servlet
 Java web servlet that allows web app user to export large datasets from ML to a CSV/Excel spreadsheet.
 The results are streamed to the browser as they are retrived from the ML database via XCC requests.
 
-This was written and tested to run on Tomcat 8.
+The basic idea is that large reports can be exported more quickly if the work is spread across the cluster in concurrent threads as in the example below:
+
+<img src="StreamingExportDiagram.jpg"  />
 
 ## Setup
 
 ### Configuration
+
+The servlet was developed and tested using a deployment running on Tomcat 8.
 
 The web.xml file must be modified to point to 1 or more XDBC app servers linked to your database.  The entries in the file shown below can be added to or expanded to support the number of App Servers and/or hosts you would like to distribute the requests across.
 
