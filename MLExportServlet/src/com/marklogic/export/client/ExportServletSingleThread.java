@@ -81,7 +81,7 @@ public class ExportServletSingleThread extends HttpServlet {
 		response.setContentType("application/vnd.ms-excel");
 		response.setHeader("Content-Disposition", "attachment; filename=download.csv");
 		// get request parameters
-		String mlModuleName = request.getParameter("moduleName");
+		String mlModuleName = request.getParameter("reportName");
 		String uris = request.getParameter("uris");
 		System.out.println("URIs:"+uris);
 		String[] uriList = uris.split(",");
@@ -96,13 +96,15 @@ public class ExportServletSingleThread extends HttpServlet {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		response.getOutputStream().write(output.getBytes());
 		
+		response.getOutputStream().write(output.getBytes());
+		//System.out.println("output: "+ output);
 		java.util.Date end = new java.util.Date();
 		System.out.println("End time: "+ end.getTime());
 		long diffInMilliseconds = (end.getTime() - start.getTime());
 		String footer = "Runtime in Millisconds: "+ diffInMilliseconds;
 		System.out.println(footer);
+		os.write(footer.getBytes());
 		
 		os.flush();
 		os.close();
